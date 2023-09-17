@@ -37,6 +37,15 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          volumeMounts:
+          - name: kubeconfig
+            mountPath: /etc/.kube
+            readOnly: true
+          env:
+          - name: KUBERNETES_DASHBOARD_URL
+            value: {{ .Values.dashboard }} 
+          - name: CLUSTER_NAME
+            value: {{ .Values.clustername }} 
           livenessProbe:
             httpGet:
               path: /
@@ -47,6 +56,10 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: {{ .Values.volumes.name }}
+        secret:
+          secretName: {{ .Values.volumes.secretname }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

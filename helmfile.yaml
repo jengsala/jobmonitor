@@ -1,0 +1,18 @@
+helmDefaults:
+  createNamespace: true
+  cleanupOnFail: true
+  historyMax: 5
+  #atomic: false
+  #wait: true
+  #waitForJobs: true
+
+---
+
+releases:
+- name: "jobmonitor"
+  chart: ./
+  installed: true
+  labels:
+    role: monitor
+  secrets:
+  - ./secrets-enc.yaml
