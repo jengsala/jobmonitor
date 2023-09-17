@@ -1,0 +1,182 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: namespace-g
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: namespace-h
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job-a
+  namespace: namespace-g
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        cronjob: job-a
+        group: one
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; sleep 20; echo Hello from the Kubernetes cluster
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job-b
+  namespace: namespace-g
+spec:
+  schedule: "*/3 * * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        cronjob: job-b
+        group: one
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; sleep 40; echo Hello from the Kubernetes cluster
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job-c
+  namespace: namespace-h
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        cronjob: job-c
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; sleep 50; echo Hello from the Kubernetes cluster
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job-d
+  namespace: namespace-g
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        cronjob: job-d
+        group: two
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; sleep 15; echo Hello from the Kubernetes cluster
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job-e
+  namespace: namespace-h
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        cronjob: job-e
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; sleep 30; echo Hello from the Kubernetes cluster
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job-f
+  namespace: namespace-g
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        cronjob: job-f
+        group: two
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; sleep 38; echo Hello from the Kubernetes cluster
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job-g
+  namespace: namespace-g
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        cronjob: job-g
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - "echo 'sleep 15 seconds...'; sleep 15; echo 'It all goes wrong'; ls /non-existing"
+          restartPolicy: Never

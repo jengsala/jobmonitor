@@ -14,10 +14,8 @@ def index():
 
     return render_template('index.html', title=title)
 
-
 @app.route('/api/fetchJobViews', methods=['GET', 'POST'])
 def fetch_job_views():
-
     monitor_url = request.cookies.get('monitor_url')
     monitor_query_params = parse.parse_qs(parse.urlparse(monitor_url).query)
 
@@ -43,7 +41,15 @@ def fetch_job_views():
             else:
                 prev_execution = None
 
-            job_view = get_job_view(job['execution'], prev_execution, app.config['KUBERNETES_DASHBOARD_URL'], app.config['CLUSTER_NAME'])
+            job_view = get_job_view(job['execution'], prev_execution,
+                                    app.config['KUBERNETES_DASHBOARD_URL'],
+                                    app.config['CLUSTER_NAME'],
+                                    app.config['SMTP_SERVER'],
+                                    app.config['SMTP_PORT'],
+                                    app.config['SMTP_USER'],
+                                    app.config['SMTP_PASSWORD'],
+                                    app.config['SMTP_SENDER'],
+                                    app.config['SMTP_RECIPIENTS'])
             job_views.append(job_view)
 
     result = {

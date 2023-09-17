@@ -69,6 +69,18 @@ spec:
           value: 'https://rancher.digitastuces.com'
         - name: CLUSTER_NAME
           value: 'local'
+        - name: SMTP_NAME
+          value: 'smtp.digitastuces.com'
+        - name: SMTP_PORT
+          value: '587'
+        - name: SMTP_USER
+          value: 'agnes.dupont@digitastuces.com'
+        - name: SMTP_PASSWORD
+          value: 'HYQ903Or0mYXQ14a'
+        - name: SMTP_SENDER
+          value: 'no-reply@digitastuces.com'
+        - name: SMTP_RECIPIENTS
+          value: 'all@digitastuces.com'
         # resources:
         #   requests:
         #     cpu: 100m

@@ -45,7 +45,19 @@ spec:
           - name: KUBERNETES_DASHBOARD_URL
             value: {{ .Values.dashboard }} 
           - name: CLUSTER_NAME
-            value: {{ .Values.clustername }} 
+            value: {{ .Values.clustername }}
+          - name: SMTP_SERVER
+            value: {{ .Values.smtp.server }}
+          - name: SMTP_PORT
+            value: "{{ .Values.smtp.port }}"
+          - name: SMTP_USER
+            value: {{ .Values.smtp.user }}
+          - name: SMTP_PASSWORD
+            value: {{ .Values.smtp.password }}
+          - name: SMTP_SENDER
+            value: {{ .Values.smtp.sender }}
+          - name: SMTP_RECIPIENTS
+            value: {{ .Values.smtp.recipients }}
           livenessProbe:
             httpGet:
               path: /

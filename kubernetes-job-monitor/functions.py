@@ -3,6 +3,9 @@ import json
 import math
 import subprocess
 import sys
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # import os
 # cluster_name = os.environ['CLUSTER_NAME']
@@ -96,7 +99,7 @@ def get_jobs(namespace=None, selector=None):
     return jobs
 
 
-def get_job_view(execution, prev_execution, kubernetes_dashboard_url,cluster_name):
+def get_job_view(execution, prev_execution, kubernetes_dashboard_url,cluster_name, smtp_server, smtp_port, smtp_user, smtp_password, smtp_sender, smtp_recipients):
     """
     Gets a job view from the specified execution and previous execution
     :param execution: dict
@@ -150,18 +153,26 @@ def get_job_view(execution, prev_execution, kubernetes_dashboard_url,cluster_nam
     prev_build_duration = estimated_duration
     progress = 0
 
+    FAIL_STATUS=False
+    _data = {}
     if execution['status'] == 'succeeded':
         status = 'successful'
     elif execution['status'] == 'failed':
         status = 'failing'
+        FAIL_STATUS=True
         print("EXECUTION FAILED !")
         print(execution)
+
+        _data = execution
+        
+
         print(30*'-')
     elif execution['status'] == 'running':
         if prev_execution and prev_execution['status'] == 'failed':
             status = 'failing running'
             print("EXECUTION FAILING !")
             print(prev_execution)
+            #job_data = prev_execution
             print(30*'=')
             # ENVOYER UNE ALERTE (MAIL | SLACK | SERVICE NOW)
         elif prev_execution and prev_execution['status'] == 'succeeded':
@@ -189,6 +200,36 @@ def get_job_view(execution, prev_execution, kubernetes_dashboard_url,cluster_nam
 
     url = '{}/dashboard/c/{}/explorer/batch.cronjob/{}/{}#jobs'.format(kubernetes_dashboard_url,cluster_name,execution['job_namespace'],execution['id'])
     
+    if FAIL_STATUS:
+        _data['url'] = url
+
+        subject = """CronJOb {} {} - {}""".format(_data['id'], str(_data['status']).upper(), _data['end_timestamp'])
+
+        body=("""<span><h2>CronJOb {} <em style="color:red">{}</em> !</h2></span>
+            <ul>
+                <li>Namespace :  <strong>{}</strong></li>
+                <li>Status    :  <strong>{}</strong></li>
+                <li>Active    :  <strong>{}</strong></li>
+                <li>Start     :  <strong>{}</strong></li>
+                <li>End       :  <strong>{}</strong></li>
+                <li>Cluster   :  <strong>{}</strong></li>
+                <li>Dashboard : <em>{}</em>.</li>
+            </ul>
+            """.format(_data['id'],
+                        str(_data['status']).upper(),
+                        _data['job_namespace'],
+                        _data['status'],
+                        _data['active'],
+                        _data['start_timestamp'],
+                        _data['end_timestamp'],
+                        cluster_name,
+                        _data['url']))
+
+        sendMailAlert(smtp_server=smtp_server, smtp_port=smtp_port,
+                    email_address=smtp_user, email_password=smtp_password,
+                    subject=subject, body=body,
+                    sender=smtp_sender, recipients=smtp_recipients)
+
     job_view = {
         'name': execution['job_name'],
         'url': url,
@@ -210,9 +251,8 @@ def get_job_view(execution, prev_execution, kubernetes_dashboard_url,cluster_nam
         }
     }
 
-    #print(job_view)
+    print(job_view)
     return job_view
-
 
 def kubectl(command, output_format=None, print_output=True):
     """
@@ -272,3 +312,24 @@ def exec_command(command, shell=False, print_output=True):
             'stderr': stderr,
             'returncode': p.returncode,
         }
+
+{'id': 'job-g', 'job_name': 'namespace-k / job-g', 'job_namespace': 'namespace-k', 'start_timestamp': '2023-09-17T15:36:03Z', 'status': 'failed', 'active': False, 'end_timestamp': '2023-09-17T15:36:53Z'}
+
+
+def sendMailAlert(smtp_server, smtp_port, email_address, email_password, subject, body, sender, recipients):
+    try:        
+        msg = MIMEMultipart()
+        msg['From'] = sender
+        msg['To'] = recipients
+        msg['Subject'] = subject
+        
+        msg.attach(MIMEText(body, 'html'))
+        # Send email
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(email_address, email_password)
+            server.send_message(msg)
+        
+        print('Email sent successfully !')
+    except Exception as x:
+        print(x)
