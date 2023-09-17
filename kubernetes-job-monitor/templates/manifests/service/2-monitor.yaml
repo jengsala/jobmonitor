@@ -1,0 +1,101 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubernetes-job-monitor
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    certmanager.k8s.io/acme-challenge-type: dns01
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - monitor.digitastuces.com
+    secretName: digitastuces-tls
+  rules:
+  - host: monitor.digitastuces.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kubernetes-job-monitor
+            port:
+              number: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-job-monitor
+  labels:
+    app: kubernetes-job-monitor
+spec:
+  selector:
+    app: kubernetes-job-monitor
+  ports:
+  - name: app-port
+    port: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubernetes-job-monitor
+  labels:
+    app: kubernetes-job-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubernetes-job-monitor
+  template:
+    metadata:
+      labels:
+        app: kubernetes-job-monitor
+    spec:
+      containers:
+      - name: kubernetes-job-monitor
+        imagePullPolicy: Always
+        image: digitastuces/jobmonitor:1.0
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: kubeconfig
+          mountPath: /etc/.kube
+          readOnly: true
+        env:
+        - name: KUBERNETES_DASHBOARD_URL
+          value: 'https://rancher.digitastuces.com'
+        - name: CLUSTER_NAME
+          value: 'local'
+        # resources:
+        #   requests:
+        #     cpu: 100m
+        #     memory: 100Mi
+        #   limits:
+        #     cpu: 100m
+        #     memory: 100Mi
+        # livenessProbe:
+        #   tcpSocket:
+        #     port: 80
+        #   initialDelaySeconds: 5
+        #   timeoutSeconds: 5
+        #   successThreshold: 1
+        #   failureThreshold: 3
+        #   periodSeconds: 10
+        # readinessProbe:
+        #   httpGet:
+        #     path: /_status/healthz
+        #     port: 80
+        #   initialDelaySeconds: 5
+        #   timeoutSeconds: 2
+        #   successThreshold: 1
+        #   failureThreshold: 3
+        #   periodSeconds: 10
+      volumes:
+      - name: kubeconfig
+        secret:
+          secretName: kubeconfig
+
+# https://rancher.digitastuces.com/dashboard/c/local/explorer/batch.cronjob/namespace-a/job-a#jobs

@@ -1,0 +1,88 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kubernetes-job-monitor
+  namespace: global
+spec:
+  rules:
+  - host: kubernetes-job-monitor.local
+    http:
+      paths:
+      - backend:
+          serviceName: kubernetes-job-monitor
+          servicePort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-job-monitor
+  namespace: global
+  labels:
+    app: kubernetes-job-monitor
+spec:
+  selector:
+    app: kubernetes-job-monitor
+  ports:
+  - name: app-port
+    port: 80
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: kubernetes-job-monitor
+  name: kubernetes-job-monitor
+  namespace: global
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubernetes-job-monitor-minimal
+  # "namespace" omitted since ClusterRole is not namespaced
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-job-monitor-minimal
+  # "namespace" omitted since ClusterRoleBinding is not namespaced
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubernetes-job-monitor-minimal
+subjects:
+- kind: ServiceAccount
+  name: kubernetes-job-monitor
+  namespace: global
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubernetes-job-monitor
+  namespace: global
+  labels:
+    app: kubernetes-job-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubernetes-job-monitor
+  template:
+    metadata:
+      labels:
+        app: kubernetes-job-monitor
+    spec:
+      containers:
+      - name: kubernetes-job-monitor
+        imagePullPolicy: Always
+        image: pietervogelaar/kubernetes-job-monitor:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: KUBERNETES_DASHBOARD_URL
+          value: 'http://kubernetes-dashboard.local'
+      serviceAccountName: kubernetes-job-monitor

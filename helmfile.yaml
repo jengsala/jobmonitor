@@ -10,7 +10,7 @@ helmDefaults:
 
 releases:
 - name: "jobmonitor"
-  chart: ./
+  chart: ./jobmonitor
   installed: true
   labels:
     role: monitor
