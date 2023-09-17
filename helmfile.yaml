@@ -15,4 +15,4 @@ releases:
   labels:
     role: monitor
   secrets:
-  - ./secrets-enc.yaml
+  - ./config-enc.yaml
